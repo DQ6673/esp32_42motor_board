@@ -1,0 +1,17 @@
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: C:/Users/dpm/Desktop/42motor/motor/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/dpm/.espressif/tools/ninja/1.10.2/ninja.exe cmTC_2f901 && ninja: error: unknown target 'cmTC_2f901'
+
+
+
+
+Detecting CXX compiler ABI info failed to compile with the following output:
+Change Dir: C:/Users/dpm/Desktop/42motor/motor/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/dpm/.espressif/tools/ninja/1.10.2/ninja.exe cmTC_4972f && ninja: error: loading 'build.ninja': 系统找不到指定的文件。
+
+
+
+
+

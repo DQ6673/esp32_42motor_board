@@ -1,0 +1,18 @@
+CMake Error at C:/Users/dpm/esp/esp-idf/tools/cmake/component.cmake:484 (add_library):
+  Cannot find source file:
+
+    C:/Users/dpm/Desktop/42motor/motor/components/user_led/ec11_encoder.c
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .mpp .m .M .mm .ixx .cppm .h
+  .hh .h++ .hm .hpp .hxx .in .txx .f .F .for .f77 .f90 .f95 .f03 .hip .ispc
+Call Stack (most recent call first):
+  components/user_led/CMakeLists.txt:8 (idf_component_register)
+
+
+CMake Error at C:/Users/dpm/esp/esp-idf/tools/cmake/component.cmake:484 (add_library):
+  No SOURCES given to target: __idf_user_led
+Call Stack (most recent call first):
+  components/user_led/CMakeLists.txt:8 (idf_component_register)
+
+
+CMake Generate step failed.  Build files cannot be regenerated correctly.

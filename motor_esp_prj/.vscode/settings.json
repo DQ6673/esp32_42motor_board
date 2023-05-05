@@ -1,0 +1,48 @@
+{
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
+    "idf.adapterTargetName": "esp32s3",
+    "idf.customExtraPaths": "C:\\Users\\dpm\\.espressif\\tools\\xtensa-esp-elf-gdb\\11.2_20220823\\xtensa-esp-elf-gdb\\bin;C:\\Users\\dpm\\.espressif\\tools\\riscv32-esp-elf-gdb\\11.2_20220823\\riscv32-esp-elf-gdb\\bin;C:\\Users\\dpm\\.espressif\\tools\\xtensa-esp32-elf\\esp-2022r1-11.2.0\\xtensa-esp32-elf\\bin;C:\\Users\\dpm\\.espressif\\tools\\xtensa-esp32s2-elf\\esp-2022r1-11.2.0\\xtensa-esp32s2-elf\\bin;C:\\Users\\dpm\\.espressif\\tools\\xtensa-esp32s3-elf\\esp-2022r1-11.2.0\\xtensa-esp32s3-elf\\bin;C:\\Users\\dpm\\.espressif\\tools\\riscv32-esp-elf\\esp-2022r1-11.2.0\\riscv32-esp-elf\\bin;C:\\Users\\dpm\\.espressif\\tools\\esp32ulp-elf\\2.35_20220830\\esp32ulp-elf\\bin;C:\\Users\\dpm\\.espressif\\tools\\cmake\\3.24.0\\bin;C:\\Users\\dpm\\.espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026\\openocd-esp32\\bin;C:\\Users\\dpm\\.espressif\\tools\\ninja\\1.10.2;C:\\Users\\dpm\\.espressif\\tools\\idf-exe\\1.0.3;C:\\Users\\dpm\\.espressif\\tools\\ccache\\4.6.2\\ccache-4.6.2-windows-x86_64;C:\\Users\\dpm\\.espressif\\tools\\dfu-util\\0.9\\dfu-util-0.9-win64",
+    "idf.customExtraVars": {
+        "OPENOCD_SCRIPTS": "C:\\Users\\dpm\\.espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026/openocd-esp32/share/openocd/scripts",
+        "IDF_CCACHE_ENABLE": "1",
+        "ESP_ROM_ELF_DIR": "C:\\Users\\dpm\\.espressif\\tools\\esp-rom-elfs\\20230113/"
+    },
+    "idf.espIdfPathWin": "C:\\Users\\dpm\\esp\\esp-idf",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32s3.cfg"
+    ],
+    "idf.pythonBinPathWin": "C:\\Users\\dpm\\.espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
+    "idf.toolsPathWin": "C:\\Users\\dpm\\.espressif",
+    "idf.portWin": "COM5",
+    "idf.flashType": "UART",
+    "files.associations": {
+        "freertos.h": "c",
+        "task.h": "c",
+        "ec11_encoder.h": "c",
+        "gpio.h": "c",
+        "freq_test.h": "c",
+        "esp_log.h": "c",
+        "ledc.h": "c",
+        "step_test.h": "c",
+        "complex": "c",
+        "stepper_app.h": "c",
+        "speed_switch.h": "c",
+        "user_console.h": "c",
+        "esp_vfs_fat.h": "c",
+        "esp_console.h": "c",
+        "esp_err.h": "c",
+        "nvs.h": "c",
+        "stdio.h": "c",
+        "bitset": "c",
+        "chrono": "c",
+        "stepper_motor_encoder.h": "c",
+        "esp_vfs_dev.h": "c",
+        "argtable3.h": "c",
+        "string.h": "c",
+        "inttypes.h": "c",
+        "esp_system.h": "c",
+        "nvs_flash.h": "c",
+        "user_nvs.h": "c"
+    }
+}
