@@ -20,7 +20,7 @@
 #define GPIO_LED_LEVEL_ON 0
 #define GPIO_LED_LEVEL_OFF 1
 
-static const char *TAG = "speed_switch";
+// static const char *TAG = "speed_switch";
 
 SemaphoreHandle_t motor_speed_semphr = NULL;
 uint32_t motor_speed = 1;

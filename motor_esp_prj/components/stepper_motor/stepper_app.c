@@ -18,7 +18,7 @@
 #include "speed_switch.h"
 #include "user_nvs.h"
 
-static const char *TAG = "motor";
+static const char *TAG = "stepper motor";
 
 /***********************************************************************************/
 #define STEP_MOTOR_GPIO_DIR_X GPIO_NUM_35
@@ -42,106 +42,154 @@ static uint32_t freq_x1 = FREQ_DEFAULT_x1,
                 freq_x100 = FREQ_DEFAULT_x100;
 static uint32_t step_basic = STEP_BASIC_DEFAULT;
 
-rmt_channel_handle_t motor_chan = NULL;
+// rmt channel
+rmt_channel_handle_t motor_chan_X = NULL;
+rmt_channel_handle_t motor_chan_Y = NULL;
+rmt_channel_handle_t motor_chan_Z = NULL;
+
+// rmt message queue
 QueueHandle_t step_X_queue = NULL;
+QueueHandle_t step_Y_queue = NULL;
+QueueHandle_t step_Z_queue = NULL;
+
+// stepper motor encoder
 rmt_encoder_handle_t uniform_motor_encoder = NULL;
+
 rmt_transmit_config_t tx_config = {
     .loop_count = 0,
 };
 
-TaskHandle_t task_stepper_motor_handle;
-#define task_stepper_motor_stackdepth 1024 * 4
-#define task_stepper_motor_priority 1
+TaskHandle_t task_stepper_motor_X_handle;
+#define task_stepper_motor_X_stackdepth 1024 * 3
+#define task_stepper_motor_X_priority 1
+
+TaskHandle_t task_stepper_motor_Y_handle;
+#define task_stepper_motor_Y_stackdepth 1024 * 3
+#define task_stepper_motor_Y_priority 1
+
+TaskHandle_t task_stepper_motor_Z_handle;
+#define task_stepper_motor_Z_stackdepth 1024 * 3
+#define task_stepper_motor_Z_priority 1
 
 // speed_switch control
 extern SemaphoreHandle_t motor_speed_semphr;
 extern uint32_t motor_speed;
 extern nvs_handle_t motor_nvs_handle;
 
-static void task_stepper_motor_handler(void *Param)
+static uint32_t get_current_motor_speed(void)
 {
-    int step_rev = 0;
+    uint32_t freq_run = 0;
+
+    xSemaphoreTake(motor_speed_semphr, portMAX_DELAY);
+    switch (motor_speed)
+    {
+    case 1:
+        freq_run = freq_x1;
+        break;
+    case 10:
+        freq_run = freq_x10;
+        break;
+    case 100:
+        freq_run = freq_x100;
+        break;
+    default:
+        break;
+    }
+    xSemaphoreGive(motor_speed_semphr);
+
+    return freq_run;
+}
+
+static void task_stepper_motor_X_handler(void *Param)
+{
+    static int step_rev_X = 0;
     static uint32_t freq_run = 0;
-    ESP_LOGI(TAG, "start motor task");
-    // freq x1
-    if (nvs_get_u32(motor_nvs_handle, "freq_set_x1", &freq_x1) == ESP_OK)
-    {
-        ESP_LOGI(TAG, "get freq_set_x1 = %luHz from nvs", freq_x1);
-    }
-    else
-    {
-        ESP_LOGW(TAG, "cannot get freq_set_x1 from nvs, using default value: %lu", freq_x1);
-    }
-    // freq x10
-    if (nvs_get_u32(motor_nvs_handle, "freq_set_x10", &freq_x10) == ESP_OK)
-    {
-        ESP_LOGI(TAG, "get freq_set_x10 = %luHz from nvs", freq_x10);
-    }
-    else
-    {
-        ESP_LOGW(TAG, "cannot get freq_set_x10 from nvs, using default value: %lu", freq_x10);
-    }
-    // freq x100
-    if (nvs_get_u32(motor_nvs_handle, "freq_set_x100", &freq_x100) == ESP_OK)
-    {
-        ESP_LOGI(TAG, "get freq_set_x100 = %luHz from nvs", freq_x100);
-    }
-    else
-    {
-        ESP_LOGW(TAG, "cannot get freq_set_x100 from nvs, using default value: %lu", freq_x100);
-    }
-    // basic step
-    if (nvs_get_u32(motor_nvs_handle, "step_basic_set", &step_basic) == ESP_OK)
-    {
-        ESP_LOGI(TAG, "get step_basic_set = %lu from nvs", step_basic);
-    }
-    else
-    {
-        ESP_LOGW(TAG, "cannot get step_basic_set from nvs, using default value: %lu", step_basic);
-    }
-    ////////////////////
 
     for (;;)
     {
-        if (xQueueReceive(step_X_queue, &step_rev, portMAX_DELAY))
+        // get speed changed by switch(3x)
+        if (xQueueReceive(step_X_queue, &step_rev_X, portMAX_DELAY))
         {
-            if (step_rev > 0)
+            if (step_rev_X > 0)
             {
                 gpio_set_level(STEP_MOTOR_GPIO_DIR_X, STEP_MOTOR_SPIN_DIR_CLOCKWISE);
             }
-            else if (step_rev < 0)
+            else if (step_rev_X < 0)
             {
                 gpio_set_level(STEP_MOTOR_GPIO_DIR_X, STEP_MOTOR_SPIN_DIR_COUNTERCLOCKWISE);
-                step_rev *= (-1);
+                step_rev_X *= (-1);
             }
 
-            xSemaphoreTake(motor_speed_semphr, portMAX_DELAY);
-            switch (motor_speed)
+            freq_run = get_current_motor_speed();
+            tx_config.loop_count = step_rev_X * step_basic * motor_speed;
+
+            ESP_ERROR_CHECK(rmt_transmit(motor_chan_X, uniform_motor_encoder, &freq_run, sizeof(freq_run), &tx_config));
+            ESP_ERROR_CHECK(rmt_tx_wait_all_done(motor_chan_X, -1));
+        }
+    }
+}
+
+static void task_stepper_motor_Y_handler(void *Param)
+{
+    static int step_rev_Y = 0;
+    static uint32_t freq_run = 0;
+
+    for (;;)
+    {
+        // get speed changed by switch(3x)
+        if (xQueueReceive(step_Y_queue, &step_rev_Y, portMAX_DELAY))
+        {
+            if (step_rev_Y > 0)
             {
-            case 1:
-                freq_run = freq_x1;
-                break;
-            case 10:
-                freq_run = freq_x10;
-                break;
-            case 100:
-                freq_run = freq_x100;
-                break;
-            default:
-                break;
+                gpio_set_level(STEP_MOTOR_GPIO_DIR_Y, STEP_MOTOR_SPIN_DIR_CLOCKWISE);
             }
-            tx_config.loop_count = step_rev * step_basic * motor_speed;
-            xSemaphoreGive(motor_speed_semphr);
+            else if (step_rev_Y < 0)
+            {
+                gpio_set_level(STEP_MOTOR_GPIO_DIR_Y, STEP_MOTOR_SPIN_DIR_COUNTERCLOCKWISE);
+                step_rev_Y *= (-1);
+            }
 
-            ESP_ERROR_CHECK(rmt_transmit(motor_chan, uniform_motor_encoder, &freq_run, sizeof(freq_run), &tx_config));
-            ESP_ERROR_CHECK(rmt_tx_wait_all_done(motor_chan, -1));
+            freq_run = get_current_motor_speed();
+            tx_config.loop_count = step_rev_Y * step_basic * motor_speed;
+
+            ESP_ERROR_CHECK(rmt_transmit(motor_chan_Y, uniform_motor_encoder, &freq_run, sizeof(freq_run), &tx_config));
+            ESP_ERROR_CHECK(rmt_tx_wait_all_done(motor_chan_Y, -1));
+        }
+    }
+}
+
+static void task_stepper_motor_Z_handler(void *Param)
+{
+    static int step_rev_Z = 0;
+    static uint32_t freq_run = 0;
+
+    for (;;)
+    {
+        // get speed changed by switch(3x)
+        if (xQueueReceive(step_Z_queue, &step_rev_Z, portMAX_DELAY))
+        {
+            if (step_rev_Z > 0)
+            {
+                gpio_set_level(STEP_MOTOR_GPIO_DIR_Z, STEP_MOTOR_SPIN_DIR_CLOCKWISE);
+            }
+            else if (step_rev_Z < 0)
+            {
+                gpio_set_level(STEP_MOTOR_GPIO_DIR_Z, STEP_MOTOR_SPIN_DIR_COUNTERCLOCKWISE);
+                step_rev_Z *= (-1);
+            }
+
+            freq_run = get_current_motor_speed();
+            tx_config.loop_count = step_rev_Z * step_basic * motor_speed;
+
+            ESP_ERROR_CHECK(rmt_transmit(motor_chan_Z, uniform_motor_encoder, &freq_run, sizeof(freq_run), &tx_config));
+            ESP_ERROR_CHECK(rmt_tx_wait_all_done(motor_chan_Z, -1));
         }
     }
 }
 
 void stepper_motor_activate(void)
 {
-    //
+    // DIR gpio
     gpio_config_t stepper_dir_io = {
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_OUTPUT,
@@ -152,29 +200,83 @@ void stepper_motor_activate(void)
     gpio_config(&stepper_dir_io);
 
     //
-    rmt_tx_channel_config_t tx_chan_config = {
+    rmt_tx_channel_config_t tx_chan_X_config = {
         .clk_src = RMT_CLK_SRC_DEFAULT, // select clock source
         .gpio_num = STEP_MOTOR_GPIO_STEP_X,
         .mem_block_symbols = 64,
         .resolution_hz = STEP_MOTOR_RESOLUTION_HZ,
         .trans_queue_depth = 10, // set the number of transactions that can be pending in the background
     };
-    ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_config, &motor_chan));
+    rmt_tx_channel_config_t tx_chan_Y_config = {
+        .clk_src = RMT_CLK_SRC_DEFAULT, // select clock source
+        .gpio_num = STEP_MOTOR_GPIO_STEP_Y,
+        .mem_block_symbols = 64,
+        .resolution_hz = STEP_MOTOR_RESOLUTION_HZ,
+        .trans_queue_depth = 10, // set the number of transactions that can be pending in the background
+    };
+    rmt_tx_channel_config_t tx_chan_Z_config = {
+        .clk_src = RMT_CLK_SRC_DEFAULT, // select clock source
+        .gpio_num = STEP_MOTOR_GPIO_STEP_Z,
+        .mem_block_symbols = 64,
+        .resolution_hz = STEP_MOTOR_RESOLUTION_HZ,
+        .trans_queue_depth = 10, // set the number of transactions that can be pending in the background
+    };
+    ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_X_config, &motor_chan_X));
+    ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_Y_config, &motor_chan_Y));
+    ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_Z_config, &motor_chan_Z));
 
     stepper_motor_uniform_encoder_config_t uniform_encoder_config = {
         .resolution = STEP_MOTOR_RESOLUTION_HZ,
     };
     ESP_ERROR_CHECK(rmt_new_stepper_motor_uniform_encoder(&uniform_encoder_config, &uniform_motor_encoder));
 
-    ESP_ERROR_CHECK(rmt_enable(motor_chan));
+    ESP_ERROR_CHECK(rmt_enable(motor_chan_X));
 
     step_X_queue = xQueueCreate(2, sizeof(int));
-    xTaskCreate(task_stepper_motor_handler,
-                "task_stepper_motor_handler",
-                task_stepper_motor_stackdepth,
+    xTaskCreate(task_stepper_motor_X_handler,
+                "task_stepper_motor_X_handler",
+                task_stepper_motor_X_stackdepth,
                 NULL,
-                task_stepper_motor_priority,
-                &task_stepper_motor_handle);
+                task_stepper_motor_X_priority,
+                &task_stepper_motor_X_handle);
+
+    xTaskCreate(task_stepper_motor_Y_handler,
+                "task_stepper_motor_Y_handler",
+                task_stepper_motor_Y_stackdepth,
+                NULL,
+                task_stepper_motor_Y_priority,
+                &task_stepper_motor_Y_handle);
+
+    xTaskCreate(task_stepper_motor_Z_handler,
+                "task_stepper_motor_Z_handler",
+                task_stepper_motor_Z_stackdepth,
+                NULL,
+                task_stepper_motor_Z_priority,
+                &task_stepper_motor_Z_handle);
+
+    // freq x1
+    if (nvs_get_u32(motor_nvs_handle, "freq_set_x1", &freq_x1) == ESP_OK)
+        ESP_LOGI(TAG, "get freq_set_x1 = %luHz from nvs", freq_x1);
+    else
+        ESP_LOGW(TAG, "cannot get freq_set_x1 from nvs, using default value: %lu", freq_x1);
+
+    // freq x10
+    if (nvs_get_u32(motor_nvs_handle, "freq_set_x10", &freq_x10) == ESP_OK)
+        ESP_LOGI(TAG, "get freq_set_x10 = %luHz from nvs", freq_x10);
+    else
+        ESP_LOGW(TAG, "cannot get freq_set_x10 from nvs, using default value: %lu", freq_x10);
+
+    // freq x100
+    if (nvs_get_u32(motor_nvs_handle, "freq_set_x100", &freq_x100) == ESP_OK)
+        ESP_LOGI(TAG, "get freq_set_x100 = %luHz from nvs", freq_x100);
+    else
+        ESP_LOGW(TAG, "cannot get freq_set_x100 from nvs, using default value: %lu", freq_x100);
+
+    // basic step
+    if (nvs_get_u32(motor_nvs_handle, "step_basic_set", &step_basic) == ESP_OK)
+        ESP_LOGI(TAG, "get step_basic_set = %lu from nvs", step_basic);
+    else
+        ESP_LOGW(TAG, "cannot get step_basic_set from nvs, using default value: %lu", step_basic);
 }
 
 /*************************************************/

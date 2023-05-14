@@ -183,7 +183,7 @@ static esp_err_t rmt_reset_stepper_motor_uniform(rmt_encoder_t *encoder)
     return ESP_OK;
 }
 
-esp_err_t rmt_new_stepper_motor_uniform_encoder(const stepper_motor_uniform_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder)
+esp_err_t  rmt_new_stepper_motor_uniform_encoder(const stepper_motor_uniform_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder)
 {
     esp_err_t ret = ESP_OK;
     rmt_stepper_uniform_encoder_t *step_encoder = NULL;
