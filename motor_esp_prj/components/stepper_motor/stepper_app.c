@@ -203,23 +203,23 @@ void stepper_motor_activate(void)
     rmt_tx_channel_config_t tx_chan_X_config = {
         .clk_src = RMT_CLK_SRC_DEFAULT, // select clock source
         .gpio_num = STEP_MOTOR_GPIO_STEP_X,
-        .mem_block_symbols = 64,
+        .mem_block_symbols = 48,
         .resolution_hz = STEP_MOTOR_RESOLUTION_HZ,
-        .trans_queue_depth = 10, // set the number of transactions that can be pending in the background
+        .trans_queue_depth = 5, // set the number of transactions that can be pending in the background
     };
     rmt_tx_channel_config_t tx_chan_Y_config = {
         .clk_src = RMT_CLK_SRC_DEFAULT, // select clock source
         .gpio_num = STEP_MOTOR_GPIO_STEP_Y,
-        .mem_block_symbols = 64,
+        .mem_block_symbols = 48,
         .resolution_hz = STEP_MOTOR_RESOLUTION_HZ,
-        .trans_queue_depth = 10, // set the number of transactions that can be pending in the background
+        .trans_queue_depth = 5, // set the number of transactions that can be pending in the background
     };
     rmt_tx_channel_config_t tx_chan_Z_config = {
         .clk_src = RMT_CLK_SRC_DEFAULT, // select clock source
         .gpio_num = STEP_MOTOR_GPIO_STEP_Z,
-        .mem_block_symbols = 64,
+        .mem_block_symbols = 48,
         .resolution_hz = STEP_MOTOR_RESOLUTION_HZ,
-        .trans_queue_depth = 10, // set the number of transactions that can be pending in the background
+        .trans_queue_depth = 5, // set the number of transactions that can be pending in the background
     };
     ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_X_config, &motor_chan_X));
     ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_Y_config, &motor_chan_Y));
@@ -231,8 +231,12 @@ void stepper_motor_activate(void)
     ESP_ERROR_CHECK(rmt_new_stepper_motor_uniform_encoder(&uniform_encoder_config, &uniform_motor_encoder));
 
     ESP_ERROR_CHECK(rmt_enable(motor_chan_X));
+    ESP_ERROR_CHECK(rmt_enable(motor_chan_Y));
+    ESP_ERROR_CHECK(rmt_enable(motor_chan_Z));
 
     step_X_queue = xQueueCreate(2, sizeof(int));
+    step_Y_queue = xQueueCreate(2, sizeof(int));
+    step_Z_queue = xQueueCreate(2, sizeof(int));
     xTaskCreate(task_stepper_motor_X_handler,
                 "task_stepper_motor_X_handler",
                 task_stepper_motor_X_stackdepth,

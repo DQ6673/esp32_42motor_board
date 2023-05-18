@@ -8,6 +8,7 @@
 #include "freertos/semphr.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+
 #include "speed_switch.h"
 
 #define GPIO_SPEED_1 GPIO_NUM_9
@@ -36,7 +37,7 @@ static void task_speed_switch(void *arg)
     for (;;)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        vTaskDelay(20 / portTICK_PERIOD_MS);
+        vTaskDelay(20 / portTICK_PERIOD_MS);       // 20ms soft filter
 
         gpio_speed_level = gpio_get_level(GPIO_SPEED_1);
         gpio_speed_level = (gpio_speed_level << 1) + gpio_get_level(GPIO_SPEED_2);

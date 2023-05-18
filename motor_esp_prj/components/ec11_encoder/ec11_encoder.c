@@ -121,6 +121,7 @@ static void task_ec11_handler(void *Param)
             xQueueSend(step_Z_queue, &step_sub_Z, 0);
             step_sum_last_Z = step_sum_Z;
         }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 

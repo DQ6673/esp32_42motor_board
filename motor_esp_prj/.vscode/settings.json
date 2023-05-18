@@ -14,7 +14,7 @@
     ],
     "idf.pythonBinPathWin": "C:\\Users\\dpm\\.espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
     "idf.toolsPathWin": "C:\\Users\\dpm\\.espressif",
-    "idf.portWin": "COM5",
+    "idf.portWin": "COM4",
     "idf.flashType": "UART",
     "files.associations": {
         "freertos.h": "c",
